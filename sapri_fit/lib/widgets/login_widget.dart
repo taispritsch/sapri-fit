@@ -86,6 +86,7 @@ class _LoginWidgetState extends State<LoginWidget>
                         TextField(
                           style: TextStyle(
                             height: 2.2,
+                            color: Color(0xFFFFFFA9)
                           ),
                           cursorColor: Color(0XFFFFFFFF),
                           decoration: InputDecoration(
@@ -118,6 +119,7 @@ class _LoginWidgetState extends State<LoginWidget>
                         TextField(
                           style: TextStyle(
                             height: 2.2,
+                            color: Color(0xFFFFFFA9)
                           ),
                           cursorColor: Color(0XFFFFFFFF),
                           decoration: InputDecoration(
@@ -178,6 +180,7 @@ class _LoginWidgetState extends State<LoginWidget>
                         TextField(
                           style: TextStyle(
                             height: 2.2,
+                            color: Color(0xFFFFFFA9)
                           ),
                           cursorColor: Color(0XFFFFFFFF),
                           decoration: InputDecoration(
@@ -206,6 +209,7 @@ class _LoginWidgetState extends State<LoginWidget>
                         TextField(
                           style: TextStyle(
                             height: 2.2,
+                            color: Color(0xFFFFFFA9)
                           ),
                           cursorColor: Color(0XFFFFFFFF),
                           decoration: InputDecoration(
@@ -234,6 +238,7 @@ class _LoginWidgetState extends State<LoginWidget>
                         TextField(
                           style: TextStyle(
                             height: 2.2,
+                            color: Color(0xFFFFFFA9)
                           ),
                           cursorColor: Color(0XFFFFFFFF),
                           decoration: InputDecoration(
