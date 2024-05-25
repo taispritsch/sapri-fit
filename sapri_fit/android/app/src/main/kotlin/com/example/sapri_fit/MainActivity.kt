@@ -1,4 +1,4 @@
-package com.example.sapri_fit
+package com.saprifit.app
 
 import io.flutter.embedding.android.FlutterActivity
 
