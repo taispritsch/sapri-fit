@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import '../constants.dart';
+import 'MainScreen.dart';
 
 class LoginWidget extends StatefulWidget {
   const LoginWidget({super.key});
@@ -40,9 +42,9 @@ class _LoginWidgetState extends State<LoginWidget>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+      backgroundColor: kBackgorundColor,
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+        backgroundColor: kBackgorundColor,
         toolbarHeight: 320,
         title: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -56,10 +58,10 @@ class _LoginWidgetState extends State<LoginWidget>
           ],
         ),
         bottom: TabBar(
-          indicatorColor: const Color(0XFFFCFF00),
+          indicatorColor: kPrimaryColor,
           indicatorSize: TabBarIndicatorSize.label,
           labelColor: const Color(0XFFFFFFFF),
-          unselectedLabelColor: const Color(0XFF808080),
+          unselectedLabelColor: kInativeColor,
           dividerColor: const Color(0x00FFFFFF),
           labelStyle: const TextStyle(
             fontSize: 20,
@@ -99,7 +101,7 @@ class _LoginWidgetState extends State<LoginWidget>
                                     BorderRadius.all(Radius.circular(10))),
                             focusedBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
-                                  color: Color(0xFFFCFF00),
+                                  color: kPrimaryColor,
                                   width: 2,
                                 ),
                                 borderRadius:
@@ -130,7 +132,7 @@ class _LoginWidgetState extends State<LoginWidget>
                                     BorderRadius.all(Radius.circular(10))),
                             focusedBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
-                                    color: Color(0xFFFCFF00), width: 2),
+                                    color: kPrimaryColor, width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             contentPadding: EdgeInsets.all(10),
@@ -150,7 +152,7 @@ class _LoginWidgetState extends State<LoginWidget>
                         height: 50,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFCFF00),
+                              backgroundColor: kPrimaryColor,
                               padding: const EdgeInsets.all(10),
                               textStyle: const TextStyle(
                                   fontSize: 18,
@@ -159,7 +161,14 @@ class _LoginWidgetState extends State<LoginWidget>
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               )),
-                          onPressed: () {},
+                          onPressed: () {
+                             Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => MainScreen(),
+                              ),
+                            );
+                          },
                           child: const Text('Entrar'),
                         ),
                       ),
@@ -191,7 +200,7 @@ class _LoginWidgetState extends State<LoginWidget>
                                     BorderRadius.all(Radius.circular(10))),
                             focusedBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
-                                    color: Color(0xFFFCFF00), width: 2),
+                                    color: kPrimaryColor, width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             contentPadding: EdgeInsets.all(10),
@@ -220,7 +229,7 @@ class _LoginWidgetState extends State<LoginWidget>
                                     BorderRadius.all(Radius.circular(10))),
                             focusedBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
-                                    color: Color(0xFFFCFF00), width: 2),
+                                    color: kPrimaryColor, width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             contentPadding: EdgeInsets.all(10),
@@ -249,7 +258,7 @@ class _LoginWidgetState extends State<LoginWidget>
                                     BorderRadius.all(Radius.circular(10))),
                             focusedBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
-                                    color: Color(0xFFFCFF00), width: 2),
+                                    color: kPrimaryColor, width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             contentPadding: EdgeInsets.all(10),
@@ -269,7 +278,7 @@ class _LoginWidgetState extends State<LoginWidget>
                         height: 50,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFCFF00),
+                              backgroundColor: kPrimaryColor,
                               padding: const EdgeInsets.all(10),
                               textStyle: const TextStyle(
                                   fontSize: 18,
