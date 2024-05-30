@@ -1,7 +1,11 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:sapri_fit/core/Snackbar.dart';
+import 'package:sapri_fit/services/authentication_service.dart';
 import '../constants.dart';
 import 'MainScreen.dart';
 
@@ -23,6 +27,12 @@ class LoginWidget extends StatefulWidget {
 class _LoginWidgetState extends State<LoginWidget>
     with TickerProviderStateMixin {
   late final TabController _tabController;
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+
+  AuthenticationService _authenticationService = AuthenticationService();
 
   @override
   void initState() {
@@ -77,104 +87,100 @@ class _LoginWidgetState extends State<LoginWidget>
       body: TabBarView(
         controller: _tabController,
         children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  const Padding(
-                      padding: EdgeInsets.only(top: 40),
-                      child: Column(children: [
-                        TextField(
-                          style: TextStyle(
-                            height: 2.2,
-                            color: Color(0xFFFFFFFF)
-                          ),
-                          cursorColor: Color(0XFFFFFFFF),
-                          decoration: InputDecoration(
-                            enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Color(0xFFFFFFA9),
-                                  width: 2,
-                                ),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10))),
-                            focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: kPrimaryColor,
-                                  width: 2,
-                                ),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10))),
-                            contentPadding: EdgeInsets.all(10),
-                            labelText: 'E-mail',
-                            fillColor: Color(0XFFFFFFFF),
-                            labelStyle: TextStyle(
-                              color: Color(0xFFFFFFA9),
-                            ),
-                          ),
-                        ),
-                      ])),
-                  const Padding(
-                      padding: EdgeInsets.only(top: 20),
-                      child: Column(children: [
-                        TextField(
-                          style: TextStyle(
-                            height: 2.2,
-                            color: Color(0xFFFFFFFF)
-                          ),
-                          cursorColor: Color(0XFFFFFFFF),
-                          decoration: InputDecoration(
-                            enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: Color(0xFFFFFFA9), width: 2),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10))),
-                            focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: kPrimaryColor, width: 2),
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10))),
-                            contentPadding: EdgeInsets.all(10),
-                            labelText: 'Senha',
-                            fillColor: Color(0XFFFFFFFF),
-                            labelStyle: TextStyle(
-                              color: Color(0xFFFFFFA9),
-                            ),
-                          ),
-                        ),
-                      ])),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 110),
-                    child: Column(children: [
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: kPrimaryColor,
-                              padding: const EdgeInsets.all(10),
-                              textStyle: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF404040)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              )),
-                          onPressed: () {
-                             Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => MainScreen(),
+          Form(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Padding(
+                        padding: const EdgeInsets.only(top: 40),
+                        child: Column(children: [
+                          TextFormField(
+                            controller: _emailController,
+                            style: const TextStyle(
+                                height: 2.2, color: Color(0xFFFFFFFF)),
+                            cursorColor: const Color(0XFFFFFFFF),
+                            decoration: const InputDecoration(
+                              enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: Color(0xFFFFFFA9),
+                                    width: 2,
+                                  ),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10))),
+                              focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                    color: kPrimaryColor,
+                                    width: 2,
+                                  ),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10))),
+                              contentPadding: EdgeInsets.all(10),
+                              labelText: 'E-mail',
+                              fillColor: Color(0XFFFFFFFF),
+                              labelStyle: TextStyle(
+                                color: Color(0xFFFFFFA9),
                               ),
-                            );
-                          },
-                          child: const Text('Entrar'),
+                            ),
+                          ),
+                        ])),
+                    Padding(
+                        padding: const EdgeInsets.only(top: 20),
+                        child: Column(children: [
+                          TextFormField(
+                            controller: _passwordController,
+                            style: const TextStyle(
+                                height: 2.2, color: Color(0xFFFFFFFF)),
+                            cursorColor: const Color(0XFFFFFFFF),
+                            decoration: const InputDecoration(
+                              enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Color(0xFFFFFFA9), width: 2),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10))),
+                              focusedBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: kPrimaryColor, width: 2),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10))),
+                              contentPadding: EdgeInsets.all(10),
+                              labelText: 'Senha',
+                              fillColor: Color(0XFFFFFFFF),
+                              labelStyle: TextStyle(
+                                color: Color(0xFFFFFFA9),
+                              ),
+                            ),
+                            obscureText: true,
+                          ),
+                        ])),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 110),
+                      child: Column(children: [
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: kPrimaryColor,
+                                padding: const EdgeInsets.all(10),
+                                textStyle: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF404040)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                )),
+                            onPressed: () {
+                              sendLogin();
+                            },
+                            child: const Text('Entrar'),
+                          ),
                         ),
-                      ),
-                    ]),
-                  ),
-                ],
+                      ]),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -183,24 +189,23 @@ class _LoginWidgetState extends State<LoginWidget>
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  const Padding(
-                      padding: EdgeInsets.only(top: 40),
+                  Padding(
+                      padding: const EdgeInsets.only(top: 40),
                       child: Column(children: [
-                        TextField(
-                          style: TextStyle(
-                            height: 2.2,
-                            color: Color(0xFFFFFFFF)
-                          ),
-                          cursorColor: Color(0XFFFFFFFF),
-                          decoration: InputDecoration(
+                        TextFormField(
+                          controller: _nameController,
+                          style: const TextStyle(
+                              height: 2.2, color: Color(0xFFFFFFFF)),
+                          cursorColor: const Color(0XFFFFFFFF),
+                          decoration: const InputDecoration(
                             enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
                                     color: Color(0xFFFFFFA9), width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: kPrimaryColor, width: 2),
+                                borderSide:
+                                    BorderSide(color: kPrimaryColor, width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             contentPadding: EdgeInsets.all(10),
@@ -212,24 +217,23 @@ class _LoginWidgetState extends State<LoginWidget>
                           ),
                         ),
                       ])),
-                  const Padding(
-                      padding: EdgeInsets.only(top: 20),
+                  Padding(
+                      padding: const EdgeInsets.only(top: 20),
                       child: Column(children: [
-                        TextField(
-                          style: TextStyle(
-                            height: 2.2,
-                            color: Color(0xFFFFFFFF)
-                          ),
-                          cursorColor: Color(0XFFFFFFFF),
-                          decoration: InputDecoration(
+                        TextFormField(
+                          controller: _emailController,
+                          style: const TextStyle(
+                              height: 2.2, color: Color(0xFFFFFFFF)),
+                          cursorColor: const Color(0XFFFFFFFF),
+                          decoration: const InputDecoration(
                             enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
                                     color: Color(0xFFFFFFA9), width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: kPrimaryColor, width: 2),
+                                borderSide:
+                                    BorderSide(color: kPrimaryColor, width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             contentPadding: EdgeInsets.all(10),
@@ -241,24 +245,23 @@ class _LoginWidgetState extends State<LoginWidget>
                           ),
                         ),
                       ])),
-                  const Padding(
-                      padding: EdgeInsets.only(top: 20),
+                  Padding(
+                      padding: const EdgeInsets.only(top: 20),
                       child: Column(children: [
-                        TextField(
-                          style: TextStyle(
-                            height: 2.2,
-                            color: Color(0xFFFFFFFF)
-                          ),
-                          cursorColor: Color(0XFFFFFFFF),
-                          decoration: InputDecoration(
+                        TextFormField(
+                          controller: _passwordController,
+                          style: const TextStyle(
+                              height: 2.2, color: Color(0xFFFFFFFF)),
+                          cursorColor: const Color(0XFFFFFFFF),
+                          decoration: const InputDecoration(
                             enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
                                     color: Color(0xFFFFFFA9), width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                    color: kPrimaryColor, width: 2),
+                                borderSide:
+                                    BorderSide(color: kPrimaryColor, width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             contentPadding: EdgeInsets.all(10),
@@ -268,6 +271,7 @@ class _LoginWidgetState extends State<LoginWidget>
                               color: Color(0xFFFFFFA9),
                             ),
                           ),
+                          obscureText: true,
                         ),
                       ])),
                   Padding(
@@ -287,7 +291,9 @@ class _LoginWidgetState extends State<LoginWidget>
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               )),
-                          onPressed: () {},
+                          onPressed: () {
+                            sendRegister();
+                          },
                           child: const Text('Cadastrar'),
                         ),
                       ),
@@ -300,5 +306,50 @@ class _LoginWidgetState extends State<LoginWidget>
         ],
       ),
     );
+  }
+
+  sendLogin() {
+    String email = _emailController.text;
+    String password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      return;
+    } else {
+      _authenticationService.signIn(email: email, password: password).then(
+        (String? error) {
+          if (error != null) {
+            showSnackbar(context: context, message: error);
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => MainScreen()),
+            );
+          }
+        },
+      );
+    }
+  }
+
+  sendRegister() {
+    String name = _nameController.text;
+    String email = _emailController.text;
+    String password = _passwordController.text;
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      return;
+    } else {
+      _authenticationService
+          .signUp(email: email, password: password, name: name)
+          .then((String? error) async {
+        if (error != null) {
+          showSnackbar(context: context, message: error);
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MainScreen()),
+          );
+        }
+      });
+    }
   }
 }

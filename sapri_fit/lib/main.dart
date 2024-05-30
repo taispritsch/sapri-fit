@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:sapri_fit/widgets/MainScreen.dart';
 import 'package:sapri_fit/widgets/login_widget.dart';
 import 'firebase_options.dart';
 
@@ -18,17 +20,18 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sapri Fit',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-      ),
-      home: const LoginWidget()
-    );
+        title: 'Sapri Fit',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          useMaterial3: true,
+        ),
+        home: const LoginWidget(),
+        );
+        // home: const Router()); ISSO É O CERTO, ELE VERIFICA SE O USUÁRIO ESTÁ LOGADO PARA NÃO LOGAR TODA VEZ
   }
 
   // This widget is the root of your application.
- /*  @override
+  /*  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
@@ -54,6 +57,29 @@ class MyApp extends StatelessWidget {
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   } */
+}
+
+class Router extends StatelessWidget {
+  const Router({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.userChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.active) {
+            final user = snapshot.data;
+
+            if (user == null) {
+              return const LoginWidget();
+            }
+
+            return MainScreen();
+          }
+
+          return const CircularProgressIndicator();
+        });
+  }
 }
 
 class MyHomePage extends StatefulWidget {
