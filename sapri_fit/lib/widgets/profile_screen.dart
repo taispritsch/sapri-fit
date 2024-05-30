@@ -91,8 +91,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                               backgroundImage: AssetImage('assets/images/gatinho.png'),
                             ),
                             Positioned(
-                              bottom: 0,
-                              right: 0,
+                              bottom: -8,
+                              right: -8,
                               child: Container(
                                 decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
@@ -100,7 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 ),
                                 padding: const EdgeInsets.all(8),
                                 child: IconButton(
-                                  icon: const Icon(Icons.camera_alt),
+                                  icon: const Icon(Icons.camera_alt, size: 30,),
                                   onPressed: () {
                                     // logica para trocar foto
                                   },
@@ -332,6 +332,158 @@ class _ProfileScreenState extends State<ProfileScreen>
                               },
                               child: const Text('Calcular'),
                             ),
+                          ),
+                        ),
+                        const SizedBox(height: 50),
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Histórico ',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white, 
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: kBackgorundColor,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.transparent),
+                          ),
+                          child: ExpansionTile(
+                            title: const Text(
+                              '20 de maio de 2024',
+                              style: TextStyle(
+                                color: Colors.white, 
+                              ),
+                            ),
+                            
+                            iconColor: Colors.white,
+                            collapsedIconColor: Colors.white, 
+                             children: [
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.center, 
+                                        children: [
+                                          Text(
+                                            'Peso',
+                                            style: TextStyle(
+                                              color: Colors.white, 
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                            ),
+                                          Text(
+                                            '65,7 kg',
+                                            style: TextStyle(
+                                              color: Colors.white, 
+                                              fontSize: 14,
+                                            ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'Altura',
+                                            style: TextStyle(
+                                              color: Colors.white, 
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                            ),
+                                          Text(
+                                            '1,75 cm',
+                                            style: TextStyle(
+                                              color: Colors.white, 
+                                              fontSize: 14,
+                                            ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Expanded(
+                                     child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            'Resultado',
+                                            style: TextStyle(
+                                              color: Colors.white, 
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                            ),
+                                          Text(
+                                            '19',
+                                            style: TextStyle(
+                                              color: Colors.white, 
+                                              fontSize: 14,
+                                            ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 30), 
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                child: Row(
+                                  children: [
+                                    const Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            '18,5 - 24,9',
+                                            style: TextStyle(
+                                              color: Colors.white, 
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                            ),
+                                          Text(
+                                            'Normal',
+                                            style: TextStyle(
+                                              color: Colors.white, 
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          Image.asset(
+                                            'assets/images/carinha-feliz.png',
+                                            fit: BoxFit.contain,
+                                            height: 100,
+                                            width: 50,
+                                          ),
+                                        ],
+                                      ),
+                                    ),   
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
