@@ -22,6 +22,7 @@ class CustomScaffold extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: kBackgorundColor,
         leading: Image.asset('assets/images/logo.png'),
+        toolbarHeight: 70.0,  
       ),
       body: body,
       backgroundColor: backgroundColor ?? Colors.white,
