@@ -27,6 +27,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   CardData? selectedCard;
   final ImagePicker _picker = ImagePicker();
 
@@ -167,93 +168,102 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.only(top: 10, left: 16, right: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Atividade',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white, 
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Atividade',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white, 
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              style: const TextStyle(
-                height: 2.2,
-                color: Color(0xFFFFFFFF),
-              ),
-              cursorColor: const Color(0XFFFFFFFF),
-              decoration: const InputDecoration(
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
+              const SizedBox(height: 20),
+              TextFormField(
+                style: const TextStyle(
+                  height: 2.2,
+                  color: Color(0xFFFFFFFF),
+                ),
+                cursorColor: const Color(0XFFFFFFFF),
+                decoration: const InputDecoration(
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color(0xFFFFFFA9),
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: kPrimaryColor,
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  contentPadding: EdgeInsets.all(10),
+                  labelText: 'Título',
+                  fillColor: Color(0XFFFFFFFF),
+                  labelStyle: TextStyle(
                     color: Color(0xFFFFFFA9),
-                    width: 2,
                   ),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: kPrimaryColor,
-                    width: 2,
+                controller: TextEditingController(text: card.title),
+                readOnly: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'O título é obrigatório';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                style: const TextStyle(
+                  height: 2.2,
+                  color: Color(0xFFFFFFFF),
+                ),
+                cursorColor: const Color(0XFFFFFFFF),
+                decoration: const InputDecoration(
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Color(0xFFFFFFA9),
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
                   ),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-                contentPadding: EdgeInsets.all(10),
-                labelText: 'Título',
-                fillColor: Color(0XFFFFFFFF),
-                labelStyle: TextStyle(
-                  color: Color(0xFFFFFFA9),
-                ),
-              ),
-              controller: TextEditingController(text: card.title),
-              readOnly: true,
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              style: const TextStyle(
-                height: 2.2,
-                color: Color(0xFFFFFFFF),
-              ),
-              cursorColor: const Color(0XFFFFFFFF),
-              decoration: const InputDecoration(
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: kPrimaryColor,
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                  ),
+                  contentPadding: EdgeInsets.all(10),
+                  labelText: 'Descrição',
+                  fillColor: Color(0XFFFFFFFF),
+                  labelStyle: TextStyle(
                     color: Color(0xFFFFFFA9),
-                    width: 2,
                   ),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(
-                    color: kPrimaryColor,
-                    width: 2,
-                  ),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
-                ),
-                contentPadding: EdgeInsets.all(10),
-                labelText: 'Descrição',
-                fillColor: Color(0XFFFFFFFF),
-                labelStyle: TextStyle(
-                  color: Color(0xFFFFFFA9),
-                ),
+                controller: TextEditingController(text: card.description),
+                readOnly: true,
               ),
-              controller: TextEditingController(text: card.description),
-              readOnly: true,
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                buildInfoCard('Tempo', card.time),
-                buildInfoCard('Distância', card.distance),
-                buildInfoCard('Pace', card.pace),
-              ],
-            ),
-          ],
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  buildInfoCard('Tempo', card.time),
+                  buildInfoCard('Distância', card.distance),
+                  buildInfoCard('Pace', card.pace),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: SpeedDial(

@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:sapri_fit/core/Snackbar.dart';
 import 'package:sapri_fit/services/authentication_service.dart';
+import 'package:email_validator/email_validator.dart';
 import '../constants.dart';
 import 'MainScreen.dart';
 
@@ -32,6 +33,8 @@ class _LoginWidgetState extends State<LoginWidget>
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
 
+  bool obscureText = true; 
+
   AuthenticationService _authenticationService = AuthenticationService();
 
   @override
@@ -47,6 +50,10 @@ class _LoginWidgetState extends State<LoginWidget>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  bool isValidEmail(String email) {
+    return EmailValidator.validate(email);
   }
 
   @override
@@ -130,28 +137,39 @@ class _LoginWidgetState extends State<LoginWidget>
                         child: Column(children: [
                           TextFormField(
                             controller: _passwordController,
+                            obscureText: obscureText, 
                             style: const TextStyle(
                                 height: 2.2, color: Color(0xFFFFFFFF)),
                             cursorColor: const Color(0XFFFFFFFF),
-                            decoration: const InputDecoration(
-                              enabledBorder: OutlineInputBorder(
+                            decoration:  InputDecoration(
+                              enabledBorder: const OutlineInputBorder(
                                   borderSide: BorderSide(
                                       color: Color(0xFFFFFFA9), width: 2),
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(10))),
-                              focusedBorder: OutlineInputBorder(
+                              focusedBorder: const OutlineInputBorder(
                                   borderSide: BorderSide(
                                       color: kPrimaryColor, width: 2),
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(10))),
                               contentPadding: EdgeInsets.all(10),
                               labelText: 'Senha',
-                              fillColor: Color(0XFFFFFFFF),
-                              labelStyle: TextStyle(
+                              fillColor: const Color(0XFFFFFFFF),
+                              labelStyle: const TextStyle(
                                 color: Color(0xFFFFFFA9),
                               ),
+                              suffixIcon: IconButton(
+                                    icon: Icon(
+                                      obscureText ? Icons.visibility : Icons.visibility_off, 
+                                      color: kInativeColor,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        obscureText = !obscureText;
+                                      });
+                                    },
+                                  ),
                             ),
-                            obscureText: true,
                           ),
                         ])),
                     Padding(
@@ -336,8 +354,15 @@ class _LoginWidgetState extends State<LoginWidget>
     String password = _passwordController.text;
 
     if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      showSnackbar(context: context, message: 'Todos os campos são obrigatórios');
       return;
-    } else {
+    } else if(!isValidEmail(email)){
+      showSnackbar(context: context, message: "Por favor, insira um e-mail válido.");
+      return;
+    } else if (password.length < 8) {
+      showSnackbar(context: context, message: 'A senha deve ter pelo menos 8 caracteres');
+      return;
+    }else {
       _authenticationService
           .signUp(email: email, password: password, name: name)
           .then((String? error) async {

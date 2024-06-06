@@ -3,13 +3,18 @@ import '../constants.dart';
 import './CustomScaffold.dart';
 
 class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+  
   @override
-  _ProfileScreenState createState() => _ProfileScreenState();
+  ProfileScreenState createState() => ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen>
-    with SingleTickerProviderStateMixin {
+class ProfileScreenState extends State<ProfileScreen>
+  with SingleTickerProviderStateMixin {
+  
   late TabController _tabController;
+  bool obscureText = true; 
+  TextEditingController passwordController = TextEditingController(); 
 
   @override
   void initState() {
@@ -48,30 +53,31 @@ class _ProfileScreenState extends State<ProfileScreen>
                 height: 48,
                 decoration: const BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: kBackgroundPageColor, width: 2.0),
+                    bottom: BorderSide(color: kBackgroundPageColor, width: 4.0), 
                   ),
                 ),
-              ),
-              TabBar(
-                controller: _tabController,
-                tabs: const[
-                  Tab(text: 'Meu perfil'),
-                  Tab(text: 'IMC'),
-                ],
-                indicator: const BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: kPrimaryColor,
-                      width: 4.0,
+                child: TabBar(
+                  controller: _tabController,
+                  tabs: const[
+                    Tab(text: 'Meu perfil'),
+                    Tab(text: 'IMC'),
+                  ],
+                  indicator: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: kPrimaryColor,
+                        width: 4.0,
+                      ),
                     ),
                   ),
+                  labelColor: kPrimaryColor,
+                  unselectedLabelColor: Colors.white,
+                  unselectedLabelStyle: const TextStyle(
+                    decoration: TextDecoration.none,
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  dividerColor: Color.fromARGB(0, 197, 24, 24),
                 ),
-                labelColor: kPrimaryColor,
-                unselectedLabelColor: Colors.white,
-                unselectedLabelStyle: const TextStyle(
-                  decoration: TextDecoration.none,
-                ),
-                indicatorSize: TabBarIndicatorSize.tab,
               ),
             ],
           ),
@@ -84,10 +90,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
+                        const SizedBox(height: 20),
                         Stack(
                           children: [
                             const CircleAvatar(
-                              radius: 50,
+                              radius: 80,
                               backgroundImage: AssetImage('assets/images/gatinho.png'),
                             ),
                             Positioned(
@@ -147,38 +154,46 @@ class _ProfileScreenState extends State<ProfileScreen>
                             ],
                           ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.only(top: 40),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 40),
                           child: Column(
                             children: [
-                              TextField(
-                                style: TextStyle(
-                                  height: 2.2,
-                                  color: Color(0xFFFFFFFF),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10), 
+                                  color: kBackgroundCardColor,
                                 ),
-                                cursorColor: Color(0XFFFFFFFF),
-                                decoration: InputDecoration(
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: Color(0xFFFFFFA9),
-                                      width: 2,
+                                child: const IgnorePointer(
+                                  child: TextField(
+                                    readOnly: true,
+                                    style: TextStyle(
+                                      height: 2.2,
+                                      color: Color(0xFFFFFFFF),
+                                      backgroundColor: kAssistantColor,
                                     ),
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(10)),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: kPrimaryColor,
-                                      width: 2,
+                                    cursorColor: Color(0XFFFFFFFF),
+                                    decoration: InputDecoration(
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: Color(0xFFFFFFA9),
+                                          width: 2,
+                                        ),
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: BorderSide(
+                                          color: kPrimaryColor,
+                                          width: 2,
+                                        ),
+                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                      ),
+                                      contentPadding: EdgeInsets.all(10),
+                                      labelText: 'E-mail',
+                                      fillColor: Color(0XFFFFFFFF),
+                                      labelStyle: TextStyle(
+                                        color: Color(0xFFFFFFA9),
+                                      ),
                                     ),
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(10)),
-                                  ),
-                                  contentPadding: EdgeInsets.all(10),
-                                  labelText: 'E-mail',
-                                  fillColor: Color(0XFFFFFFFF),
-                                  labelStyle: TextStyle(
-                                    color: Color(0xFFFFFFA9),
                                   ),
                                 ),
                               ),
@@ -213,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                         BorderRadius.all(Radius.circular(10)),
                                   ),
                                   contentPadding: EdgeInsets.all(10),
-                                  labelText: 'Senha',
+                                  labelText: 'Data de nascimento',
                                   fillColor: Color(0XFFFFFFFF),
                                   labelStyle: TextStyle(
                                     color: Color(0xFFFFFFA9),
@@ -223,16 +238,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 40),
+                          child: SexoDropdown(),
+                        ),
                         const Padding(
                           padding: EdgeInsets.only(top: 40),
                           child: Column(
@@ -271,6 +280,68 @@ class _ProfileScreenState extends State<ProfileScreen>
                             ],
                           ),
                         ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 40),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: kPrimaryColor,
+                                padding: const EdgeInsets.all(10),
+                                textStyle: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: kBackgroundCardColor,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              onPressed: () {
+                                // lógica
+                              },
+                              child: const Text('Salvar'),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 50,
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: kBackgroundPageColor,
+                                padding: const EdgeInsets.all(10),
+                                textStyle: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: kBackgroundCardColor,
+                                ),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  side: const BorderSide(color: kBorderCardColor, width: 2),
+                                ),
+                              ),
+                              onPressed: () {
+                                // lógica
+                              },
+                              child: const Text('Deslogar'),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
                         const Padding(
                           padding: EdgeInsets.only(top: 20),
                           child: Column(
@@ -498,3 +569,63 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 }
+
+class SexoDropdown extends StatefulWidget {
+  const SexoDropdown({super.key});
+
+ @override
+  SexoDropdownState createState() => SexoDropdownState();
+}
+
+
+class SexoDropdownState extends State<SexoDropdown> {
+  String? _selectedSexo;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      value: _selectedSexo,
+     decoration: const InputDecoration(
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: kBorderCardColor,
+            width: 2,
+          ),
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(
+            color: kPrimaryColor,
+            width: 2,
+          ),
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+        ),
+        contentPadding: EdgeInsets.all(10),
+        labelText: 'Sexo',
+        fillColor: Color(0XFFFFFFFF),
+        labelStyle: TextStyle(
+          color: kBorderCardColor,
+        ),
+      ),
+      icon: const Icon(Icons.arrow_drop_down, color: kBorderCardColor),
+      style: const TextStyle(
+        color: Color(0xFFFFFFFF),
+        height: 2.2,
+      ),
+      dropdownColor: kBackgorundColor,
+      onChanged: (String? newValue) {
+        setState(() {
+          _selectedSexo = newValue;
+        });
+      },
+      items: <String>['Masculino', 'Feminino', 'Outro']
+          .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+    );
+  }
+}
+
