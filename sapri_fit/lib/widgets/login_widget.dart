@@ -35,7 +35,7 @@ class _LoginWidgetState extends State<LoginWidget>
 
   bool obscureText = true; 
 
-  AuthenticationService _authenticationService = AuthenticationService();
+  final AuthenticationService _authenticationService = AuthenticationService();
 
   @override
   void initState() {
@@ -111,7 +111,7 @@ class _LoginWidgetState extends State<LoginWidget>
                             decoration: const InputDecoration(
                               enabledBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
-                                    color: Color(0xFFFFFFA9),
+                                    color: kBorderCardColor,
                                     width: 2,
                                   ),
                                   borderRadius:
@@ -127,7 +127,7 @@ class _LoginWidgetState extends State<LoginWidget>
                               labelText: 'E-mail',
                               fillColor: Color(0XFFFFFFFF),
                               labelStyle: TextStyle(
-                                color: Color(0xFFFFFFA9),
+                                color: kBorderCardColor,
                               ),
                             ),
                           ),
@@ -144,7 +144,7 @@ class _LoginWidgetState extends State<LoginWidget>
                             decoration:  InputDecoration(
                               enabledBorder: const OutlineInputBorder(
                                   borderSide: BorderSide(
-                                      color: Color(0xFFFFFFA9), width: 2),
+                                      color: kBorderCardColor, width: 2),
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(10))),
                               focusedBorder: const OutlineInputBorder(
@@ -156,7 +156,7 @@ class _LoginWidgetState extends State<LoginWidget>
                               labelText: 'Senha',
                               fillColor: const Color(0XFFFFFFFF),
                               labelStyle: const TextStyle(
-                                color: Color(0xFFFFFFA9),
+                                color: kBorderCardColor,
                               ),
                               suffixIcon: IconButton(
                                     icon: Icon(
@@ -218,7 +218,7 @@ class _LoginWidgetState extends State<LoginWidget>
                           decoration: const InputDecoration(
                             enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
-                                    color: Color(0xFFFFFFA9), width: 2),
+                                    color: kBorderCardColor, width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             focusedBorder: OutlineInputBorder(
@@ -230,7 +230,7 @@ class _LoginWidgetState extends State<LoginWidget>
                             labelText: 'Nome',
                             fillColor: Color(0XFFFFFFFF),
                             labelStyle: TextStyle(
-                              color: Color(0xFFFFFFA9),
+                              color: kBorderCardColor,
                             ),
                           ),
                         ),
@@ -246,7 +246,7 @@ class _LoginWidgetState extends State<LoginWidget>
                           decoration: const InputDecoration(
                             enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
-                                    color: Color(0xFFFFFFA9), width: 2),
+                                    color: kBorderCardColor, width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             focusedBorder: OutlineInputBorder(
@@ -258,7 +258,7 @@ class _LoginWidgetState extends State<LoginWidget>
                             labelText: 'E-mail',
                             fillColor: Color(0XFFFFFFFF),
                             labelStyle: TextStyle(
-                              color: Color(0xFFFFFFA9),
+                              color: kBorderCardColor,
                             ),
                           ),
                         ),
@@ -274,7 +274,7 @@ class _LoginWidgetState extends State<LoginWidget>
                           decoration: const InputDecoration(
                             enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
-                                    color: Color(0xFFFFFFA9), width: 2),
+                                    color: kBorderCardColor, width: 2),
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10))),
                             focusedBorder: OutlineInputBorder(
@@ -286,7 +286,7 @@ class _LoginWidgetState extends State<LoginWidget>
                             labelText: 'Senha',
                             fillColor: Color(0XFFFFFFFF),
                             labelStyle: TextStyle(
-                              color: Color(0xFFFFFFA9),
+                              color: kBorderCardColor,
                             ),
                           ),
                           obscureText: true,
@@ -305,7 +305,7 @@ class _LoginWidgetState extends State<LoginWidget>
                               textStyle: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF404040)),
+                                  color: kBackgroundCardColor),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               )),

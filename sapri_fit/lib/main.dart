@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:sapri_fit/widgets/MainScreen.dart';
 import 'package:sapri_fit/widgets/login_widget.dart';
+import 'package:sapri_fit/widgets/map_widget.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -25,7 +26,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           useMaterial3: true,
         ),
-        home: const LoginWidget(),
+        home: const Router()
         );
         // home: const Router()); ISSO É O CERTO, ELE VERIFICA SE O USUÁRIO ESTÁ LOGADO PARA NÃO LOGAR TODA VEZ
   }
