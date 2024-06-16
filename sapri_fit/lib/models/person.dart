@@ -14,7 +14,7 @@ class Person {
 
   Person({required this.uid, required this.name, required this.email, required this.userUid});
 
-  Person.fromMap(Map<String, dynamic> data)
+  Person.fromFirestore(Map<String, dynamic> data)
       : uid = data['uid'],
         name = data['name'],
         email = data['email'],
@@ -24,7 +24,7 @@ class Person {
         weight = data['weight'],
         height = data['height'];
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toFirestore() {
     return {
       'uid': uid,
       'name': name,
