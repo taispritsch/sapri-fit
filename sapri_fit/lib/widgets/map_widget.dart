@@ -65,6 +65,7 @@ class _MapWidget extends State<MapWidget> {
     Position position = await _determinePosition();
 
     setState(() {
+      _stopwatch.start();
       _initialPosition.add(position.latitude);
       _initialPosition.add(position.longitude);
       _myPosition.add(position.latitude);
@@ -116,7 +117,6 @@ class _MapWidget extends State<MapWidget> {
     setState(() {
       _startActivitiy = !_startActivitiy;
       if (_startActivitiy) {
-        _stopwatch.start();
         getLocationUpdates();
       } else {
         stopListening();

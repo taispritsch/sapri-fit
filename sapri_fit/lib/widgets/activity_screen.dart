@@ -213,7 +213,7 @@ class _ActivityScreen extends State<ActivityScreen> {
                   child: Text(
                     'Atividade',
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -402,9 +402,9 @@ class _ActivityScreen extends State<ActivityScreen> {
                       child: Text(
                         'Imagens',
                         style: TextStyle(
-                          color: Color(0xFFFFFFFF),
-                          fontWeight: FontWeight.bold,
-                        ),
+                            color: Color(0xFFFFFFFF),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20),
                       ),
                     ),
                     SizedBox(
@@ -495,7 +495,7 @@ class _ActivityScreen extends State<ActivityScreen> {
   Widget buildInfoCard(String title, String value) {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.all(8),
+        margin: const EdgeInsets.only(top: 8, bottom: 8, right: 4),
         child: Card(
           color: kBorderCardColor,
           shape: RoundedRectangleBorder(
@@ -511,16 +511,17 @@ class _ActivityScreen extends State<ActivityScreen> {
                 child: Text(
                   title,
                   style: const TextStyle(
-                    color: kBackgroundCardColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+                      color: kBackgroundCardColor, fontSize: 16),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.only(left: 8.0, bottom: 8.0, right: 8.0),
                 child: Text(
                   value,
-                  style: const TextStyle(color: kBackgroundCardColor),
+                  style: const TextStyle(
+                      color: kBackgroundCardColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16),
                 ),
               ),
             ],
