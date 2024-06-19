@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:sapri_fit/core/Snackbar.dart';
+import 'package:sapri_fit/models/user.dart';
+import 'package:sapri_fit/services/create_person_service.dart';
 import '../constants.dart';
 import './CustomScaffold.dart';
 import './login_widget.dart';
 import 'package:sapri_fit/services/authentication_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:sapri_fit/models/person.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -22,8 +26,13 @@ class ProfileScreenState extends State<ProfileScreen>
   final picker = ImagePicker();
   late TabController _tabController;
   bool obscureText = true; 
-  TextEditingController passwordController = TextEditingController(); 
+  TextEditingController nameController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController birthDateController = TextEditingController();
+  TextEditingController heightController = TextEditingController();
+  TextEditingController weightController = TextEditingController();
   final AuthenticationService _authenticationService = AuthenticationService(); 
+  final CreatePersonService _createPersonService = CreatePersonService();
   String? _selectedSexo;
 
   Future getImage() async {
@@ -43,6 +52,60 @@ class ProfileScreenState extends State<ProfileScreen>
     _tabController.addListener(() {
       setState(() {}); 
     });
+
+    firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _createPersonService.getPersonByUserUid(user.uid).then((person) {
+        if (person != null) {
+          setState(() {
+            nameController.text = person.name;
+            emailController.text = person.email;
+            birthDateController.text = person.birthDate ?? '';
+            _selectedSexo = person.sex;
+            heightController.text = (person.height ?? 0).toString();
+            weightController.text = (person.weight ?? 0).toString();
+          });
+        }
+      });
+    }
+  }
+
+  Future<void> saveUserData() async {
+    if (nameController.text.isEmpty) {
+      showSnackbar(context: context, message: 'O campo Nome é obrigatório.');
+      return;
+    }
+
+    firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      Person? existingPerson = await _createPersonService.getPersonByUserUid(user.uid);
+      
+      if (existingPerson != null) {
+        int? height = int.tryParse(heightController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+        int? weight = int.tryParse(weightController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+
+        Person updatedPerson = Person(
+          uid: existingPerson.uid,
+          name: nameController.text,
+          email: user.email ?? '',
+          userUid: User(uid: user.uid, email: user.email ?? ''),
+          sex: _selectedSexo,
+          birthDate: birthDateController.text,
+          height: height,
+          weight: weight,
+        );
+
+        await _createPersonService.updatePerson(
+          uid: existingPerson.uid, 
+          name: updatedPerson.name,
+          email: updatedPerson.email,
+          sex: updatedPerson.sex,
+          birthDate: updatedPerson.birthDate,
+          height: updatedPerson.height,
+          weight: updatedPerson.weight,
+        );
+      }
+    }
   }
 
   @override
@@ -53,7 +116,7 @@ class ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    User? user = FirebaseAuth.instance.currentUser;
+  /*firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;*/
 
     return CustomScaffold(
       currentIndex: 2,
@@ -168,17 +231,18 @@ class ProfileScreenState extends State<ProfileScreen>
                             ),
                           ],
                         ),
-                        const Padding(
-                          padding: EdgeInsets.only(top: 40),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 40),
                           child: Column(
                             children: [
                               TextField(
-                                style: TextStyle(
+                                controller: nameController,
+                                style: const TextStyle(
                                   height: 2.2,
                                   color: Color(0xFFFFFFFF),
                                 ),
-                                cursorColor: Color(0XFFFFFFFF),
-                                decoration: InputDecoration(
+                                cursorColor: const Color(0XFFFFFFFF),
+                                decoration: const InputDecoration(
                                   enabledBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
                                       color: Color(0xFFFFFFA9),
@@ -218,7 +282,7 @@ class ProfileScreenState extends State<ProfileScreen>
                                 child: IgnorePointer(
                                   child: TextField(
                                     readOnly: true,
-                                    controller: TextEditingController(text: user?.email ?? ''),
+                                    controller: emailController,
                                     style: const TextStyle(
                                       height: 2.2,
                                       color: Color(0xFFFFFFFF),
@@ -257,6 +321,7 @@ class ProfileScreenState extends State<ProfileScreen>
                           child: Column(
                             children: [
                               TextField(
+                                controller: birthDateController,
                                 inputFormatters: [DateInputFormatter()],
                                 keyboardType: TextInputType.datetime,
                                 style: const TextStyle(
@@ -355,7 +420,15 @@ class ProfileScreenState extends State<ProfileScreen>
                                 ),
                               ),
                               onPressed: () {
-                                // lógica
+                                saveUserData().then((_) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Dados salvos com sucesso!')),
+                                  );
+                                }).catchError((error) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Erro ao salvar dados: $error')),
+                                  );
+                                });
                               },
                               child: const Text('Salvar'),
                             ),
@@ -397,17 +470,18 @@ class ProfileScreenState extends State<ProfileScreen>
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
-                        const Padding(
-                          padding: EdgeInsets.only(top: 20),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20),
                           child: Column(
                             children: [
                               TextField(
-                                style: TextStyle(
+                                controller: heightController,
+                                style: const TextStyle(
                                   height: 2.2,
                                   color: Color(0xFFFFFFFF),
                                 ),
-                                cursorColor: Color(0XFFFFFFFF),
-                                decoration: InputDecoration(
+                                cursorColor: const Color(0XFFFFFFFF),
+                                decoration: const InputDecoration(
                                   enabledBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
                                       color: Color(0xFFFFFFA9),
@@ -435,17 +509,18 @@ class ProfileScreenState extends State<ProfileScreen>
                             ],
                           ),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.only(top: 20),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20),
                           child: Column(
                             children: [
                               TextField(
-                                style: TextStyle(
+                                controller: weightController,
+                                style: const TextStyle(
                                   height: 2.2,
                                   color: Color(0xFFFFFFFF),
                                 ),
-                                cursorColor: Color(0XFFFFFFFF),
-                                decoration: InputDecoration(
+                                cursorColor: const Color(0XFFFFFFFF),
+                                decoration: const InputDecoration(
                                   enabledBorder: OutlineInputBorder(
                                     borderSide: BorderSide(
                                       color: Color(0xFFFFFFA9),
@@ -491,9 +566,7 @@ class ProfileScreenState extends State<ProfileScreen>
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-                              onPressed: () {
-                                // Implemente a lógica do botão aqui
-                              },
+                              onPressed: saveUserData,
                               child: const Text('Calcular'),
                             ),
                           ),

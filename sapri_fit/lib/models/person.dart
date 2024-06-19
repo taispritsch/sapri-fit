@@ -12,7 +12,16 @@ class Person {
 
   //IMAGEM
 
-  Person({required this.uid, required this.name, required this.email, required this.userUid});
+  Person({
+    required this.uid, 
+    required this.name, 
+    required this.email, 
+    required this.userUid, 
+    this.birthDate,
+    this.sex,
+    this.weight,
+    this.height,
+  });
 
   Person.fromMap(Map<String, dynamic> data)
       : uid = data['uid'],
