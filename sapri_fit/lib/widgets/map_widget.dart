@@ -7,6 +7,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sapri_fit/constants.dart';
+import 'package:sapri_fit/widgets/activity_screen.dart';
+import 'package:sapri_fit/widgets/record_screen.dart';
 
 class MapWidget extends StatefulWidget {
   const MapWidget({super.key});
@@ -25,6 +27,7 @@ class _MapWidget extends State<MapWidget> {
   bool _openScreen = true;
   double _km = 0;
   double _pace = 0;
+  String _minutesTimer = "";
   late Stopwatch _stopwatch;
   late Timer t;
 
@@ -62,6 +65,7 @@ class _MapWidget extends State<MapWidget> {
     Position position = await _determinePosition();
 
     setState(() {
+      _stopwatch.start();
       _initialPosition.add(position.latitude);
       _initialPosition.add(position.longitude);
       _myPosition.add(position.latitude);
@@ -84,6 +88,12 @@ class _MapWidget extends State<MapWidget> {
       _positionStream =
           Geolocator.getPositionStream(locationSettings: locationSettings)
               .listen((Position position) {
+
+         if (position.latitude == _myPosition[0] &&
+            position.longitude == _myPosition[1]) {
+          return;
+        }
+
         setState(() {
           _myPosition.clear();
           _myPosition.add(position.latitude);
@@ -107,11 +117,11 @@ class _MapWidget extends State<MapWidget> {
     setState(() {
       _startActivitiy = !_startActivitiy;
       if (_startActivitiy) {
-        _stopwatch.start();
         getLocationUpdates();
       } else {
         stopListening();
         _stopwatch.stop();
+        formatTimer();
         calculatePace();
         showDialogAlert();
       }
@@ -143,7 +153,11 @@ class _MapWidget extends State<MapWidget> {
   }
 
   String formatTimer() {
-    return "${_stopwatch.elapsed.inHours}h ${_stopwatch.elapsed.inMinutes.remainder(60)}m ${(_stopwatch.elapsed.inSeconds.remainder(60))}s";
+    setState(() {
+      _minutesTimer = "${_stopwatch.elapsed.inHours}h ${_stopwatch.elapsed.inMinutes.remainder(60)}m ${(_stopwatch.elapsed.inSeconds.remainder(60))}s";
+    });
+
+    return _minutesTimer;
   }
 
   calculatePace() {
@@ -151,11 +165,24 @@ class _MapWidget extends State<MapWidget> {
       return;
     }
 
-    var $minutes = _stopwatch.elapsed.inMinutes;
-
+    var minutes = _stopwatch.elapsed.inMinutes;
     setState(() {
-      _pace = round($minutes / _km);
+      _pace = round((minutes / _km), decimals: 2);
     });
+  }
+
+  saveActivity() {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ActivityScreen(
+                  title: "",
+                  description: "",
+                  time: _minutesTimer,
+                  distance: _km,
+                  pace: _pace,
+                  mapPoints: _points,
+                )));
   }
 
   showDialogAlert() {
@@ -183,8 +210,10 @@ class _MapWidget extends State<MapWidget> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-//                Navigator.of(context).pop();
-                print('Descartar atividade');
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const RecordScreen()));
               },
               child: const Text(
                 'Descartar',
@@ -197,7 +226,7 @@ class _MapWidget extends State<MapWidget> {
             ),
             TextButton(
               onPressed: () {
-                print('Salvar atividade');
+                saveActivity();
               },
               style: ButtonStyle(
                 backgroundColor:
@@ -319,6 +348,7 @@ class _MapWidget extends State<MapWidget> {
             return const Center(
               child: CircularProgressIndicator(
                 color: kPrimaryColor,
+                backgroundColor: kBackgroundCardColor,
               ),
             );
           }
@@ -345,6 +375,7 @@ class _MapWidget extends State<MapWidget> {
                     child: const Icon(
                       Icons.person_pin_circle,
                       color: kBackgroundPageColor,
+                      size: 40,
                     ),
                   ),
                 ],
