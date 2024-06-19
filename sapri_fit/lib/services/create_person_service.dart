@@ -36,11 +36,9 @@ class CreatePersonService {
         dynamic userUidData = userData['userUid'];
 
         if (userUidData is String) {
-          User user = User (uid: userUidData, email: userData['email']); 
-          return Person.fromMap({
-            ...userData,
-            'userUid': user
-          });
+          User user = User(uid: userUidData, email: userData['email']);
+          userData['userUid'] = user; 
+          return Person.fromFirestore(userData);
         }
       } else {
         return null;
