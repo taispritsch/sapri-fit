@@ -9,6 +9,7 @@ class Person {
   String? sex;
   int? weight;
   int? height;
+  String? imageUrl;
 
   //IMAGEM
 
@@ -21,6 +22,7 @@ class Person {
     this.sex,
     this.weight,
     this.height,
+    this.imageUrl,
   });
 
   Person.fromFirestore(Map<String, dynamic> data)
@@ -31,7 +33,8 @@ class Person {
         birthDate = data['birthDate'],
         sex = data['sex'],
         weight = data['weight'],
-        height = data['height'];
+        height = data['height'],
+        imageUrl = data['imageUrl'];
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -43,6 +46,7 @@ class Person {
       'sex': sex,
       'weight': weight,
       'height': height,
+      'imageUrl': imageUrl,
     };
   }
  

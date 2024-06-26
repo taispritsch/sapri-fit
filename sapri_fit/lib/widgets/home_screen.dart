@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sapri_fit/core/Snackbar.dart';
 import 'package:sapri_fit/models/activity.dart';
+import 'package:sapri_fit/models/person.dart';
 import 'package:sapri_fit/widgets/activity_screen.dart';
 import '../constants.dart';
 import './CustomScaffold.dart';
@@ -32,7 +33,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   CardData? selectedCard;
-  final ImagePicker _picker = ImagePicker();
   FirebaseFirestore db = FirebaseFirestore.instance;
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
@@ -254,13 +254,23 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ListTile(
-                leading: const SizedBox(
-                  width: 50,
-                  height: 50,
-                  child: CircleAvatar(
-                    backgroundImage: AssetImage('assets/images/gatinho.png'),
-                  ),
-                ),
+                leading: SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: kAssistantColor,
+                          width: 2,
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 80,
+                        backgroundImage:
+                            NetworkImage(await getMyImage(activity.personUid)),
+                      ),
+                    )),
                 title: Text(
                   await getMyName(activity.personUid),
                   style: const TextStyle(
@@ -403,6 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<String> getMyName(DocumentReference<Object?> personUid) async {
     var personName = 'Usuário não encontrado';
+
     await db.collection('persons').doc(personUid.id).get().then((value) {
       if (value.data() != null) {
         personName = value.data()?['name'];
@@ -410,5 +421,18 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     return personName;
+  }
+
+  Future<String> getMyImage(DocumentReference<Object?> personUid) async {
+    var personImage =
+        'https://firebasestorage.googleapis.com/v0/b/sapri-fit.appspot.com/o/gatinho.png?alt=media&token=179e52e3-a532-4f02-bfa7-807ee8aa2f77';
+
+    await db.collection('persons').doc(personUid.id).get().then((value) {
+      if (value.data() != null) {
+        personImage = value.data()?['imageUrl'];
+      }
+    });
+
+    return personImage;
   }
 }

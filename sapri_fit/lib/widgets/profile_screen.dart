@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sapri_fit/core/Snackbar.dart';
 import 'package:sapri_fit/models/user.dart';
-import 'package:sapri_fit/services/create_person_service.dart';
+import 'package:sapri_fit/services/person_service.dart';
 import '../constants.dart';
 import './CustomScaffold.dart';
 import './login_widget.dart';
@@ -14,25 +14,25 @@ import 'package:sapri_fit/models/person.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
-  
+
   @override
   ProfileScreenState createState() => ProfileScreenState();
 }
 
 class ProfileScreenState extends State<ProfileScreen>
-  with SingleTickerProviderStateMixin {
-  
-  File? _image; 
+    with SingleTickerProviderStateMixin {
+  File? _image;
+  String _imageUrl = 'https://firebasestorage.googleapis.com/v0/b/sapri-fit.appspot.com/o/gatinho.png?alt=media&token=179e52e3-a532-4f02-bfa7-807ee8aa2f77';
   final picker = ImagePicker();
   late TabController _tabController;
-  bool obscureText = true; 
+  bool obscureText = true;
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController birthDateController = TextEditingController();
   TextEditingController heightController = TextEditingController();
   TextEditingController weightController = TextEditingController();
-  final AuthenticationService _authenticationService = AuthenticationService(); 
-  final CreatePersonService _createPersonService = CreatePersonService();
+  final AuthenticationService _authenticationService = AuthenticationService();
+  final PersonService _personService = PersonService();
   String? _selectedSexo;
 
   Future getImage() async {
@@ -50,12 +50,12 @@ class ProfileScreenState extends State<ProfileScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
-      setState(() {}); 
+      setState(() {});
     });
 
     firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
     if (user != null) {
-      _createPersonService.getPersonByUserUid(user.uid).then((person) {
+      _personService.getPersonByUserUid(user.uid).then((person) {
         if (person != null) {
           setState(() {
             nameController.text = person.name;
@@ -64,6 +64,7 @@ class ProfileScreenState extends State<ProfileScreen>
             _selectedSexo = person.sex;
             heightController.text = (person.height ?? 0).toString();
             weightController.text = (person.weight ?? 0).toString();
+            _imageUrl = person.imageUrl!;
           });
         }
       });
@@ -78,11 +79,30 @@ class ProfileScreenState extends State<ProfileScreen>
 
     firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
     if (user != null) {
-      Person? existingPerson = await _createPersonService.getPersonByUserUid(user.uid);
-      
+      Person? existingPerson =
+          await _personService.getPersonByUserUid(user.uid);
+
       if (existingPerson != null) {
-        int? height = int.tryParse(heightController.text.replaceAll(RegExp(r'[^0-9]'), ''));
-        int? weight = int.tryParse(weightController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+        int? height = int.tryParse(
+            heightController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+        int? weight = int.tryParse(
+            weightController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+
+        if (_image != null) {
+          await _personService
+              .uploadImage(_image!.path, _image!.path)
+              .then((value) {
+            setState(() {
+              _imageUrl = value;
+            });
+          }).catchError((error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Erro ao salvar imagem'),
+              ),
+            );
+          });
+        }
 
         Person updatedPerson = Person(
           uid: existingPerson.uid,
@@ -93,16 +113,18 @@ class ProfileScreenState extends State<ProfileScreen>
           birthDate: birthDateController.text,
           height: height,
           weight: weight,
+          imageUrl: _imageUrl,
         );
 
-        await _createPersonService.updatePerson(
-          uid: existingPerson.uid, 
+        await _personService.updatePerson(
+          uid: existingPerson.uid,
           name: updatedPerson.name,
           email: updatedPerson.email,
           sex: updatedPerson.sex,
           birthDate: updatedPerson.birthDate,
           height: updatedPerson.height,
           weight: updatedPerson.weight,
+          imageUrl: updatedPerson.imageUrl,
         );
       }
     }
@@ -116,7 +138,7 @@ class ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-  /*firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;*/
+    /*firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;*/
 
     return CustomScaffold(
       currentIndex: 2,
@@ -138,22 +160,22 @@ class ProfileScreenState extends State<ProfileScreen>
                 height: 68,
                 decoration: const BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: kBackgroundPageColor, width: 4.0), 
+                    bottom: BorderSide(color: kBackgroundPageColor, width: 4.0),
                   ),
                 ),
                 child: TabBar(
                   controller: _tabController,
-                  tabs: const[
+                  tabs: const [
                     Tab(
                       child: Text(
                         'Meu perfil',
-                        style: TextStyle(fontSize: 18),  
+                        style: TextStyle(fontSize: 18),
                       ),
                     ),
                     Tab(
                       child: Text(
                         'IMC',
-                        style: TextStyle(fontSize: 18),  
+                        style: TextStyle(fontSize: 18),
                       ),
                     ),
                   ],
@@ -201,7 +223,9 @@ class ProfileScreenState extends State<ProfileScreen>
                                   ),
                                   child: CircleAvatar(
                                     radius: 80,
-                                    backgroundImage: _image != null ? FileImage(_image!) : const AssetImage('assets/images/gatinho.png'),
+                                    backgroundImage: _image != null
+                                        ? FileImage(_image!)
+                                        : NetworkImage(_imageUrl),
                                   ),
                                 )
                               ],
@@ -276,7 +300,7 @@ class ProfileScreenState extends State<ProfileScreen>
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10), 
+                                  borderRadius: BorderRadius.circular(10),
                                   color: kBackgroundCardColor,
                                 ),
                                 child: IgnorePointer(
@@ -294,14 +318,16 @@ class ProfileScreenState extends State<ProfileScreen>
                                           color: Color(0xFFFFFFA9),
                                           width: 2,
                                         ),
-                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(10)),
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderSide: BorderSide(
                                           color: kPrimaryColor,
                                           width: 2,
                                         ),
-                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(10)),
                                       ),
                                       contentPadding: EdgeInsets.all(10),
                                       labelText: 'E-mail',
@@ -366,23 +392,27 @@ class ProfileScreenState extends State<ProfileScreen>
                                 color: kBorderCardColor,
                                 width: 2,
                               ),
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
                                 color: kPrimaryColor,
                                 width: 2,
                               ),
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
                             ),
-                            contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 15, horizontal: 10),
                             labelText: 'Sexo',
                             fillColor: Color(0XFFFFFFFF),
                             labelStyle: TextStyle(
                               color: kBorderCardColor,
                             ),
                           ),
-                          icon: const Icon(Icons.arrow_drop_down, color: kBorderCardColor),
+                          icon: const Icon(Icons.arrow_drop_down,
+                              color: kBorderCardColor),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -422,11 +452,15 @@ class ProfileScreenState extends State<ProfileScreen>
                               onPressed: () {
                                 saveUserData().then((_) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Dados salvos com sucesso!')),
+                                    const SnackBar(
+                                        content:
+                                            Text('Dados salvos com sucesso!')),
                                   );
                                 }).catchError((error) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Erro ao salvar dados: $error')),
+                                    SnackBar(
+                                        content: Text(
+                                            'Erro ao salvar dados: $error')),
                                   );
                                 });
                               },
@@ -451,10 +485,11 @@ class ProfileScreenState extends State<ProfileScreen>
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
-                                  side: const BorderSide(color: kBorderCardColor, width: 2),
+                                  side: const BorderSide(
+                                      color: kBorderCardColor, width: 2),
                                 ),
                               ),
-                               onPressed: () {
+                              onPressed: () {
                                 logout();
                               },
                               child: const Text('Deslogar'),
@@ -579,7 +614,7 @@ class ProfileScreenState extends State<ProfileScreen>
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white, 
+                              color: Colors.white,
                             ),
                           ),
                         ),
@@ -598,25 +633,27 @@ class ProfileScreenState extends State<ProfileScreen>
                               title: const Text(
                                 '20 de maio de 2024',
                                 style: TextStyle(
-                                  color: Colors.white, 
+                                  color: Colors.white,
                                   fontSize: 18,
                                 ),
                               ),
                               iconColor: Colors.white,
-                              collapsedIconColor: Colors.white, 
+                              collapsedIconColor: Colors.white,
                               children: [
                                 const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 16.0),
                                   child: Row(
                                     children: [
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.center, 
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
                                           children: [
                                             Text(
                                               'Peso',
                                               style: TextStyle(
-                                                color: Colors.white, 
+                                                color: Colors.white,
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16,
                                               ),
@@ -624,7 +661,7 @@ class ProfileScreenState extends State<ProfileScreen>
                                             Text(
                                               '65,7 kg',
                                               style: TextStyle(
-                                                color: Colors.white, 
+                                                color: Colors.white,
                                                 fontSize: 16,
                                               ),
                                             ),
@@ -634,12 +671,13 @@ class ProfileScreenState extends State<ProfileScreen>
                                       SizedBox(width: 8),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
                                           children: [
                                             Text(
                                               'Altura',
                                               style: TextStyle(
-                                                color: Colors.white, 
+                                                color: Colors.white,
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 16,
                                               ),
@@ -647,7 +685,7 @@ class ProfileScreenState extends State<ProfileScreen>
                                             Text(
                                               '1,75 cm',
                                               style: TextStyle(
-                                                color: Colors.white, 
+                                                color: Colors.white,
                                                 fontSize: 16,
                                               ),
                                             ),
@@ -656,78 +694,81 @@ class ProfileScreenState extends State<ProfileScreen>
                                       ),
                                       SizedBox(width: 8),
                                       Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Resultado',
-                                            style: TextStyle(
-                                              color: Colors.white, 
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Resultado',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
                                             ),
+                                            Text(
+                                              '19',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 16,
+                                              ),
                                             ),
-                                          Text(
-                                            '19',
-                                            style: TextStyle(
-                                              color: Colors.white, 
-                                              fontSize: 16,
-                                            ),
-                                            ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 30), 
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                child: Row(
-                                  children: [
-                                    const Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            '18,5 - 24,9',
-                                            style: TextStyle(
-                                              color: Colors.white, 
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
+                                const SizedBox(height: 30),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0),
+                                  child: Row(
+                                    children: [
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              '18,5 - 24,9',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
                                             ),
+                                            Text(
+                                              'Normal',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
                                             ),
-                                          Text(
-                                            'Normal',
-                                            style: TextStyle(
-                                              color: Colors.white, 
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                            ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/carinha-feliz.png',
-                                            fit: BoxFit.contain,
-                                            height: 100,
-                                            width: 50,
-                                          ),
-                                        ],
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Image.asset(
+                                              'assets/images/carinha-feliz.png',
+                                              fit: BoxFit.contain,
+                                              height: 100,
+                                              width: 50,
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),   
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                          ),
-                          
                         ),
                       ],
                     ),
@@ -742,8 +783,8 @@ class ProfileScreenState extends State<ProfileScreen>
   }
 
   logout() {
-     _authenticationService.signOut();
-     Navigator.pushReplacement(
+    _authenticationService.signOut();
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginWidget()),
     );
@@ -769,5 +810,3 @@ class DateInputFormatter extends TextInputFormatter {
     );
   }
 }
-
-
