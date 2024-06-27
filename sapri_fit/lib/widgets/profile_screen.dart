@@ -1,8 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:sapri_fit/core/Snackbar.dart';
 import 'package:sapri_fit/models/user.dart';
 import 'package:sapri_fit/services/create_person_service.dart';
+import 'package:sapri_fit/services/imc_service.dart';
 import '../constants.dart';
 import './CustomScaffold.dart';
 import './login_widget.dart';
@@ -22,19 +25,25 @@ class ProfileScreen extends StatefulWidget {
 class ProfileScreenState extends State<ProfileScreen>
   with SingleTickerProviderStateMixin {
   
-  File? _image; 
+  final AuthenticationService _authenticationService = AuthenticationService(); 
+  final CreatePersonService _createPersonService = CreatePersonService();
+  final IMCService _imcServiceService = IMCService();
   final picker = ImagePicker();
-  late TabController _tabController;
-  bool obscureText = true; 
+
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController birthDateController = TextEditingController();
   TextEditingController heightController = TextEditingController();
   TextEditingController weightController = TextEditingController();
-  final AuthenticationService _authenticationService = AuthenticationService(); 
-  final CreatePersonService _createPersonService = CreatePersonService();
-  String? _selectedSexo;
+  TextEditingController calcDate = TextEditingController();
 
+  File? _image; 
+  bool obscureText = true; 
+  List<Map<String, dynamic>> imcRecords = []; 
+  String? _selectedSexo;
+  double? imc;
+  late TabController _tabController;
+  
   Future getImage() async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
@@ -62,11 +71,41 @@ class ProfileScreenState extends State<ProfileScreen>
             emailController.text = person.email;
             birthDateController.text = person.birthDate ?? '';
             _selectedSexo = person.sex;
-            heightController.text = (person.height ?? 0).toString();
-            weightController.text = (person.weight ?? 0).toString();
+
+            if (person.imc != null && person.imc!.isNotEmpty) {
+              var lastIMC = person.imc!.last;
+              heightController.text = (lastIMC['height'] ?? 0).toString();
+              weightController.text = (lastIMC['weight'] ?? 0).toString();
+              
+              if (lastIMC['calc_date'] is Timestamp) {
+                Timestamp timestamp = lastIMC['calc_date'];
+                DateTime dateTime = timestamp.toDate(); 
+                calcDate.text = DateFormat('dd/MM/yyyy').format(dateTime);
+              } else {
+                calcDate.text = lastIMC['calc_date'].toString();
+              }
+            }
           });
         }
       });
+    }
+    _carregarRegistrosIMC();
+  }
+
+  Future<void> _carregarRegistrosIMC() async {
+    firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      Person? existingPerson = await _createPersonService.getPersonByUserUid(user.uid);
+      if (existingPerson != null) {
+        String personUid = existingPerson.uid;
+        List<Map<String, dynamic>> registros = await _imcServiceService.getIMCRecords(personUid);
+
+        registros.sort((a, b) => b['calc_date'].compareTo(a['calc_date']));
+        
+        setState(() {
+          imcRecords = registros;
+        });
+      }
     }
   }
 
@@ -81,9 +120,6 @@ class ProfileScreenState extends State<ProfileScreen>
       Person? existingPerson = await _createPersonService.getPersonByUserUid(user.uid);
       
       if (existingPerson != null) {
-        int? height = int.tryParse(heightController.text.replaceAll(RegExp(r'[^0-9]'), ''));
-        int? weight = int.tryParse(weightController.text.replaceAll(RegExp(r'[^0-9]'), ''));
-
         Person updatedPerson = Person(
           uid: existingPerson.uid,
           name: nameController.text,
@@ -91,8 +127,6 @@ class ProfileScreenState extends State<ProfileScreen>
           userUid: User(uid: user.uid, email: user.email ?? ''),
           sex: _selectedSexo,
           birthDate: birthDateController.text,
-          height: height,
-          weight: weight,
         );
 
         await _createPersonService.updatePerson(
@@ -101,10 +135,62 @@ class ProfileScreenState extends State<ProfileScreen>
           email: updatedPerson.email,
           sex: updatedPerson.sex,
           birthDate: updatedPerson.birthDate,
-          height: updatedPerson.height,
-          weight: updatedPerson.weight,
         );
       }
+    }
+  }
+
+  Future<void> calculateAndSaveIMC() async {
+    if (heightController.text.isEmpty || weightController.text.isEmpty) {
+      showSnackbar(context: context, message: 'Os campos são obrigatórios.');
+      return;
+    }
+
+    String heightText = heightController.text.replaceAll(',', '.');
+    String weightText = weightController.text.replaceAll(',', '.'); 
+
+    double? height = double.tryParse(heightText);
+    double? weight = double.tryParse(weightText);
+
+    if (height != null && weight != null && height > 0) {
+      double heightInMeters = height;
+      double weightInKg = weight;
+
+      double imcValue = await IMCService.calculateIMC(height: heightInMeters, weight: weightInKg);
+      Map<String, dynamic> imcDescriptionMap = IMCService.getIMCDescription(imcValue);
+      String imcDescription = imcDescriptionMap['description'];
+
+      setState(() {
+        imc = imcValue;
+      });
+
+      firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        Person? existingPerson = await _createPersonService.getPersonByUserUid(user.uid);
+
+        if (existingPerson != null) {
+          String personUid = existingPerson.uid;
+
+          await _imcServiceService.saveIMC(
+            personUid: personUid,
+            height: height,
+            weight: weight,
+            calcDate: DateTime.now(),
+            imcDescription: imcDescription,
+          );
+
+          List<Map<String, dynamic>> registros = await _imcServiceService.getIMCRecords(personUid);
+          registros.sort((a, b) => b['calc_date'].compareTo(a['calc_date']));
+
+          setState(() {
+            imcRecords = registros;
+          });
+        }
+      }
+    } else {
+      setState(() {
+        imc = 0;
+      });
     }
   }
 
@@ -476,6 +562,26 @@ class ProfileScreenState extends State<ProfileScreen>
                             children: [
                               TextField(
                                 controller: heightController,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(3),
+                                    TextInputFormatter.withFunction((oldValue, newValue) {
+                                      if (newValue.text.isNotEmpty) {
+                                        final formattedText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+                                        final firstDigit = formattedText.substring(0, 1);
+                                        final restDigits = formattedText.substring(1);
+                                        final beforeCursor = newValue.selection.baseOffset;
+                                        final afterCursor = formattedText.length + (beforeCursor > 1 ? 1 : 0);
+                                        
+                                        return TextEditingValue(
+                                          text: '$firstDigit${restDigits.isEmpty ? '' : ','}$restDigits',
+                                          selection: TextSelection.collapsed(offset: afterCursor),
+                                        );
+                                      }
+                                      return newValue;
+                                    }),
+                                  ],
                                 style: const TextStyle(
                                   height: 2.2,
                                   color: Color(0xFFFFFFFF),
@@ -515,6 +621,10 @@ class ProfileScreenState extends State<ProfileScreen>
                             children: [
                               TextField(
                                 controller: weightController,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  LengthLimitingTextInputFormatter(4),
+                                ],
                                 style: const TextStyle(
                                   height: 2.2,
                                   color: Color(0xFFFFFFFF),
@@ -566,12 +676,23 @@ class ProfileScreenState extends State<ProfileScreen>
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-                              onPressed: saveUserData,
+                              onPressed: () {
+                                calculateAndSaveIMC().then((_) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('IMC calculado com sucesso!')),
+                                  );
+                                }).catchError((error) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Erro ao calcular IMC: $error')),
+                                  );
+                                });
+                              },
                               child: const Text('Calcular'),
                             ),
                           ),
                         ),
                         const SizedBox(height: 50),
+                        if (heightController.text.isNotEmpty && heightController.text != "0")
                         const Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
@@ -584,150 +705,155 @@ class ProfileScreenState extends State<ProfileScreen>
                           ),
                         ),
                         const SizedBox(height: 20),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: kBackgorundColor,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.transparent),
-                          ),
-                          child: Theme(
-                            data: ThemeData(
-                              dividerColor: Colors.transparent,
-                            ),
-                            child: ExpansionTile(
-                              title: const Text(
-                                '20 de maio de 2024',
-                                style: TextStyle(
-                                  color: Colors.white, 
-                                  fontSize: 18,
-                                ),
+                        if (heightController.text.isNotEmpty && heightController.text != "0")
+                        Column(
+                          children: imcRecords.map((record) {
+                            Map<String, dynamic> imcDescriptionMap = IMCService.getIMCDescription(record['imc_value']);
+                            String imcDescription = imcDescriptionMap['result'];
+                            String imagePath = imcDescriptionMap['imagePath'];
+                            String description = imcDescriptionMap['description'];
+
+                            return Container(
+                              margin: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: kBackgorundColor,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.transparent),
                               ),
-                              iconColor: Colors.white,
-                              collapsedIconColor: Colors.white, 
-                              children: [
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 16.0),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.center, 
-                                          children: [
-                                            Text(
-                                              'Peso',
-                                              style: TextStyle(
-                                                color: Colors.white, 
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                            Text(
-                                              '65,7 kg',
-                                              style: TextStyle(
-                                                color: Colors.white, 
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      SizedBox(width: 8),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              'Altura',
-                                              style: TextStyle(
-                                                color: Colors.white, 
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                            Text(
-                                              '1,75 cm',
-                                              style: TextStyle(
-                                                color: Colors.white, 
-                                                fontSize: 16,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      SizedBox(width: 8),
-                                      Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            'Resultado',
-                                            style: TextStyle(
-                                              color: Colors.white, 
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                            ),
-                                          Text(
-                                            '19',
-                                            style: TextStyle(
-                                              color: Colors.white, 
-                                              fontSize: 16,
-                                            ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                              child: ExpansionTile(
+                                title: Text(
+                                  formatarData(record['calc_date']),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 30), 
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                child: Row(
-                                  children: [
-                                    const Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            '18,5 - 24,9',
-                                            style: TextStyle(
-                                              color: Colors.white, 
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                            ),
-                                          Text(
-                                            'Normal',
-                                            style: TextStyle(
-                                              color: Colors.white, 
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.center,
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/carinha-feliz.png',
-                                            fit: BoxFit.contain,
-                                            height: 100,
-                                            width: 50,
+                                iconColor: Colors.white,
+                                collapsedIconColor: Colors.white,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              const Text(
+                                                'Peso',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                              Text(
+                                                '${record['weight'].toString()} kg',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                    ),   
-                                  ],
-                                ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              const Text(
+                                                'Altura',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                              Text(
+                                                '${record['height'].toString()} cm',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              const Text(
+                                                'Resultado',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                              Text(
+                                                record['imc_value'].toStringAsFixed(1),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 30),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                                description,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                              Text(
+                                                imcDescription,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Image.asset(
+                                                imagePath,
+                                                fit: BoxFit.contain,
+                                                height: 100,
+                                                width: 50,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          ),
-                          
+                            );
+                          }).toList(),
                         ),
                       ],
                     ),
@@ -770,4 +896,12 @@ class DateInputFormatter extends TextInputFormatter {
   }
 }
 
+//formata a data para exibir no título dos collapsibles
+String formatarData(DateTime data) {
+  List<String> meses = [
+    "", "janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho",
+    "agosto", "setembro", "outubro", "novembro", "dezembro"
+  ];
 
+  return "${data.day} de ${meses[data.month]} de ${data.year}";
+}

@@ -7,8 +7,7 @@ class Person {
   User userUid;
   String? birthDate;
   String? sex;
-  int? weight;
-  int? height;
+  List? imc;
 
   //IMAGEM
 
@@ -19,8 +18,7 @@ class Person {
     required this.userUid, 
     this.birthDate,
     this.sex,
-    this.weight,
-    this.height,
+    this.imc,
   });
 
   Person.fromFirestore(Map<String, dynamic> data)
@@ -30,8 +28,7 @@ class Person {
         userUid = data['userUid'],
         birthDate = data['birthDate'],
         sex = data['sex'],
-        weight = data['weight'],
-        height = data['height'];
+        imc = data['imc'];
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -41,9 +38,7 @@ class Person {
       'userUid': userUid,
       'birthDate': birthDate,
       'sex': sex,
-      'weight': weight,
-      'height': height,
+      'imc': imc,
     };
   }
- 
 }

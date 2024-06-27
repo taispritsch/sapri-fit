@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:sapri_fit/models/person.dart';
 import 'dart:async';
-
 import 'package:sapri_fit/models/user.dart';
 
 class CreatePersonService {
@@ -55,8 +54,6 @@ class CreatePersonService {
     required String email,
     String? sex,
     String? birthDate,
-    int? height,
-    int? weight,
   }) async {
     try {
       final personRef = db.collection('persons').doc(uid);
@@ -65,8 +62,6 @@ class CreatePersonService {
         'email': email,
         'sex': sex,
         'birthDate': birthDate,
-        'height': height,
-        'weight': weight,
       });
 
       return "Updated person";
