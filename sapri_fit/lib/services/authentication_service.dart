@@ -1,9 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:sapri_fit/services/create_person_service.dart';
+import 'package:sapri_fit/models/person.dart';
+import 'package:sapri_fit/services/person_service.dart';
 
 class AuthenticationService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final CreatePersonService _createPersonService = CreatePersonService();
+  final PersonService _personService = PersonService();
 
   // Sign in with email and password
   Future<String?> signIn(
@@ -35,7 +36,7 @@ class AuthenticationService {
 
       final user = userCredential.user;
 
-      await _createPersonService.createPerson(
+      await _personService.createPerson(
           name: name, email: email, userUid: user!.uid);
 
       return null;
@@ -56,5 +57,10 @@ class AuthenticationService {
   // Get current user
   User? getCurrentUser() {
     return _firebaseAuth.currentUser;
+  }
+
+  // Get person by user uid
+  Future<Person?> getPersonByUserUid(String userUid) async {
+    return await _personService.getPersonByUserUid(userUid);
   }
 }

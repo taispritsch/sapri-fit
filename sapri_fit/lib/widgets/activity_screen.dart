@@ -1,35 +1,39 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:sapri_fit/constants.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:sapri_fit/core/Snackbar.dart';
 import 'package:sapri_fit/services/authentication_service.dart';
-import 'package:sapri_fit/services/create_activity_service.dart';
+import 'package:sapri_fit/services/activity_service.dart';
 import 'package:sapri_fit/widgets/CustomScaffold.dart';
 import 'package:sapri_fit/widgets/MainScreen.dart';
 
 class ActivityScreen extends StatefulWidget {
+  final String? uid;
   final String title;
   final String description;
   final String time;
-  final double distance;
-  final double pace;
+  final String distance;
+  final String pace;
+  final List<String>? image;
+
   final List<LatLng> mapPoints;
 
   const ActivityScreen(
       {super.key,
+      this.uid,
       required this.title,
       required this.description,
       required this.time,
       required this.distance,
       required this.pace,
-      required this.mapPoints});
+      required this.mapPoints,
+      this.image});
 
   @override
   State<ActivityScreen> createState() => _ActivityScreen();
@@ -42,7 +46,7 @@ class _ActivityScreen extends State<ActivityScreen> {
   List<File> _images = [];
   final List<String> _imagesUrl = [];
 
-  final CreateActivityService _createActivityService = CreateActivityService();
+  final ActivityService _activityService = ActivityService();
 
   final AuthenticationService _authenticationService = AuthenticationService();
 
@@ -52,6 +56,12 @@ class _ActivityScreen extends State<ActivityScreen> {
   @override
   void initState() {
     _mapController = MapController();
+
+    if (widget.uid != null) {
+      _titleController.text = widget.title;
+      _descriptionController.text = widget.description;
+      _imagesUrl.addAll(widget.image!);
+    }
     super.initState();
   }
 
@@ -137,7 +147,7 @@ class _ActivityScreen extends State<ActivityScreen> {
   saveActivity() async {
     if (_formKey.currentState!.validate()) {
       for (var image in _images) {
-        await _createActivityService
+        await _activityService
             .uploadImage(image.path, image.path)
             .then((value) {
           setState(() {
@@ -152,38 +162,52 @@ class _ActivityScreen extends State<ActivityScreen> {
         });
       }
 
-      _createActivityService
-          .createActivity(
-        title: _titleController.text,
-        description: _descriptionController.text,
-        dateTime: DateTime.now().toString(),
-        pace: widget.pace.toString(),
-        distance: widget.distance.toString(),
-        duration: widget.time,
-        userUid: _authenticationService.getCurrentUser()!.uid,
-        image: _imagesUrl,
-        location: widget.mapPoints
-            .map((e) => GeoPoint(e.latitude, e.longitude))
-            .toList(),
-      )
-          .then((value) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Atividade salva com sucesso'),
-          ),
-        );
-      }).catchError((error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Erro ao salvar atividade'),
-          ),
-        );
+      if (widget.uid == null || widget.uid!.isEmpty) {
+        _activityService
+            .createActivity(
+          title: _titleController.text,
+          description: _descriptionController.text,
+          dateTime: DateTime.now().toString(),
+          pace: widget.pace.toString(),
+          distance: widget.distance.toString(),
+          duration: widget.time,
+          userUid: _authenticationService.getCurrentUser()!.uid,
+          image: _imagesUrl,
+          location: widget.mapPoints
+              .map((e) => GeoPoint(e.latitude, e.longitude))
+              .toList(),
+        )
+            .then((value) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MainScreen()),
+          );
+        }).catchError((error) {
+          showSnackbar(context: context, message: 'Erro ao salvar atividade');
+        });
+      } else {
+        _activityService
+            .updateActivity(
+          uid: widget.uid!,
+          title: _titleController.text,
+          description: _descriptionController.text,
+          image: _imagesUrl,
+        )
+            .then((value) {
+          showSnackbar(
+              context: context,
+              message: 'Atividade atualizada com sucesso',
+              isError: false);
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => MainScreen()),
-        );
-      });
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => MainScreen()),
+          );
+        }).catchError((error) {
+          showSnackbar(
+              context: context, message: 'Erro ao atualizar atividade');
+        });
+      }
     }
   }
 
@@ -291,8 +315,8 @@ class _ActivityScreen extends State<ActivityScreen> {
                 Row(
                   children: [
                     buildInfoCard('Tempo', widget.time),
-                    buildInfoCard('Distância', '${widget.distance} km'),
-                    buildInfoCard('Pace', '${widget.pace} min/km'),
+                    buildInfoCard('Distância', widget.distance),
+                    buildInfoCard('Pace', widget.pace),
                   ],
                 ),
                 Row(
@@ -385,7 +409,7 @@ class _ActivityScreen extends State<ActivityScreen> {
     return FutureBuilder(
         future: Future.delayed(const Duration(seconds: 1)),
         builder: (context, snapshot) {
-          if (_images.isEmpty) {
+          if (_imagesUrl.isEmpty && _images.isEmpty) {
             return const SizedBox();
           }
           return Expanded(
@@ -409,26 +433,29 @@ class _ActivityScreen extends State<ActivityScreen> {
                     ),
                     SizedBox(
                       height: 100,
-                      width: 100,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: _images.length,
+                        itemCount: _imagesUrl.length + _images.length,
                         itemBuilder: (context, index) {
-                          return Padding(
+                          if (index < _imagesUrl.length) {
+                            return Padding(
                               padding: const EdgeInsets.all(8.0),
-                              child: Card(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                  side: const BorderSide(
-                                      color: kBorderCardColor, width: 1),
-                                ),
-                                child: Image.file(
-                                  _images[index],
-                                  width: 100,
-                                  height: 100,
-                                  fit: BoxFit.fill,
-                                ),
-                              ));
+                              child: Image.network(
+                                _imagesUrl[index],
+                                width: 100,
+                                height: 100,
+                              ),
+                            );
+                          } else {
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Image.file(
+                                _images[index - _imagesUrl.length],
+                                width: 100,
+                                height: 100,
+                              ),
+                            );
+                          }
                         },
                       ),
                     ),
@@ -511,17 +538,18 @@ class _ActivityScreen extends State<ActivityScreen> {
                 child: Text(
                   title,
                   style: const TextStyle(
-                      color: kBackgroundCardColor, fontSize: 16),
+                      color: kBackgroundCardColor, fontSize: 14),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(left: 8.0, bottom: 8.0, right: 8.0),
+                padding:
+                    const EdgeInsets.only(left: 8.0, bottom: 8.0, right: 8.0),
                 child: Text(
                   value,
                   style: const TextStyle(
                       color: kBackgroundCardColor,
                       fontWeight: FontWeight.bold,
-                      fontSize: 16),
+                      fontSize: 14),
                 ),
               ),
             ],

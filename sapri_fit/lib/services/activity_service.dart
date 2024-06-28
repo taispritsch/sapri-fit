@@ -2,9 +2,8 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:sapri_fit/models/person.dart';
 
-class CreateActivityService {
+class ActivityService {
   FirebaseStorage storage = FirebaseStorage.instance;
   FirebaseFirestore db = FirebaseFirestore.instance;
 
@@ -22,7 +21,7 @@ class CreateActivityService {
     }
   }
 
-  Future<String> createActivity(
+  Future createActivity(
       {required String title,
       String? description,
       required String dateTime,
@@ -35,7 +34,7 @@ class CreateActivityService {
       }) async {
     try {
       // Save activity in database
-       var personUid = await db.collection('persons').where('userUid', isEqualTo: userUid).get().then((value) => value.docs.first.id);
+      DocumentReference personUid = await db.collection('persons').where('userUid', isEqualTo: userUid).get().then((value) => value.docs.first.reference);
 
       final newActivity = db.collection('activities').doc();
 
@@ -52,11 +51,33 @@ class CreateActivityService {
         'location': location,
       });
 
-      //PEGAR O UID DA ATIVIDADE E DA PESSOA
       return 'Atividade criada com sucesso';
     } catch (e) {
       print(e);
       return 'Erro ao criar atividade';
+    }
+  }
+
+  Future updateActivity(
+      {required String uid,
+      required String title,
+      String? description,
+      List? image,
+      }) async {
+    try {
+      // Save activity in database
+      final newActivity = db.collection('activities').doc(uid);
+
+      await newActivity.update({
+        'title': title,
+        'description': description,
+        'image': image,
+      });
+
+      return 'Atividade atualizada com sucesso';
+    } catch (e) {
+      print(e);
+      return 'Erro ao atualizar atividade';
     }
   }
 }

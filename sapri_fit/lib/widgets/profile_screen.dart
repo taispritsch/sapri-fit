@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:sapri_fit/core/Snackbar.dart';
 import 'package:sapri_fit/models/user.dart';
-import 'package:sapri_fit/services/create_person_service.dart';
+import 'package:sapri_fit/services/person_service.dart';
 import 'package:sapri_fit/services/imc_service.dart';
 import '../constants.dart';
 import './CustomScaffold.dart';
@@ -17,32 +17,32 @@ import 'package:sapri_fit/models/person.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
-  
+
   @override
   ProfileScreenState createState() => ProfileScreenState();
 }
 
 class ProfileScreenState extends State<ProfileScreen>
   with SingleTickerProviderStateMixin {
+  File? _image;
+  String _imageUrl = 'https://firebasestorage.googleapis.com/v0/b/sapri-fit.appspot.com/o/gatinho.png?alt=media&token=179e52e3-a532-4f02-bfa7-807ee8aa2f77';
   
   final AuthenticationService _authenticationService = AuthenticationService(); 
-  final CreatePersonService _createPersonService = CreatePersonService();
   final IMCService _imcServiceService = IMCService();
+  final PersonService _personService = PersonService();
   final picker = ImagePicker();
-
+  late TabController _tabController;
+  bool obscureText = true;
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController birthDateController = TextEditingController();
   TextEditingController heightController = TextEditingController();
   TextEditingController weightController = TextEditingController();
   TextEditingController calcDate = TextEditingController();
-
-  File? _image; 
-  bool obscureText = true; 
+ 
   List<Map<String, dynamic>> imcRecords = []; 
   String? _selectedSexo;
   double? imc;
-  late TabController _tabController;
   
   Future getImage() async {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -59,23 +59,28 @@ class ProfileScreenState extends State<ProfileScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
-      setState(() {}); 
+      setState(() {});
     });
 
     firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
     if (user != null) {
-      _createPersonService.getPersonByUserUid(user.uid).then((person) {
+      _personService.getPersonByUserUid(user.uid).then((person) {
         if (person != null) {
           setState(() {
             nameController.text = person.name;
             emailController.text = person.email;
             birthDateController.text = person.birthDate ?? '';
             _selectedSexo = person.sex;
+            _imageUrl = person.imageUrl ?? _imageUrl;
 
             if (person.imc != null && person.imc!.isNotEmpty) {
               var lastIMC = person.imc!.last;
-              heightController.text = (lastIMC['height'] ?? 0).toString();
-              weightController.text = (lastIMC['weight'] ?? 0).toString();
+
+              double height = lastIMC['height'] ?? 0;
+              double weight = lastIMC['weight'] ?? 0;
+
+              heightController.text = height.toString().replaceAll('.', ',');
+              weightController.text = weight.toString().replaceAll('.', ',');
               
               if (lastIMC['calc_date'] is Timestamp) {
                 Timestamp timestamp = lastIMC['calc_date'];
@@ -95,7 +100,7 @@ class ProfileScreenState extends State<ProfileScreen>
   Future<void> _carregarRegistrosIMC() async {
     firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
     if (user != null) {
-      Person? existingPerson = await _createPersonService.getPersonByUserUid(user.uid);
+      Person? existingPerson = await _personService.getPersonByUserUid(user.uid);
       if (existingPerson != null) {
         String personUid = existingPerson.uid;
         List<Map<String, dynamic>> registros = await _imcServiceService.getIMCRecords(personUid);
@@ -109,6 +114,7 @@ class ProfileScreenState extends State<ProfileScreen>
     }
   }
 
+
   Future<void> saveUserData() async {
     if (nameController.text.isEmpty) {
       showSnackbar(context: context, message: 'O campo Nome é obrigatório.');
@@ -117,9 +123,31 @@ class ProfileScreenState extends State<ProfileScreen>
 
     firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
     if (user != null) {
-      Person? existingPerson = await _createPersonService.getPersonByUserUid(user.uid);
-      
+      Person? existingPerson =
+          await _personService.getPersonByUserUid(user.uid);
+
       if (existingPerson != null) {
+        /*int? height = int.tryParse(
+            heightController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+        int? weight = int.tryParse(
+            weightController.text.replaceAll(RegExp(r'[^0-9]'), ''));*/
+
+        if (_image != null) {
+          await _personService
+              .uploadImage(_image!.path, _image!.path)
+              .then((value) {
+            setState(() {
+              _imageUrl = value;
+            });
+          }).catchError((error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Erro ao salvar imagem'),
+              ),
+            );
+          });
+        }
+
         Person updatedPerson = Person(
           uid: existingPerson.uid,
           name: nameController.text,
@@ -127,14 +155,16 @@ class ProfileScreenState extends State<ProfileScreen>
           userUid: User(uid: user.uid, email: user.email ?? ''),
           sex: _selectedSexo,
           birthDate: birthDateController.text,
+          imageUrl: _imageUrl,
         );
 
-        await _createPersonService.updatePerson(
-          uid: existingPerson.uid, 
+        await _personService.updatePerson(
+          uid: existingPerson.uid,
           name: updatedPerson.name,
           email: updatedPerson.email,
           sex: updatedPerson.sex,
           birthDate: updatedPerson.birthDate,
+          imageUrl: updatedPerson.imageUrl,
         );
       }
     }
@@ -166,7 +196,7 @@ class ProfileScreenState extends State<ProfileScreen>
 
       firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
       if (user != null) {
-        Person? existingPerson = await _createPersonService.getPersonByUserUid(user.uid);
+        Person? existingPerson = await _personService.getPersonByUserUid(user.uid);
 
         if (existingPerson != null) {
           String personUid = existingPerson.uid;
@@ -202,7 +232,7 @@ class ProfileScreenState extends State<ProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-  /*firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;*/
+    /*firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;*/
 
     return CustomScaffold(
       currentIndex: 2,
@@ -224,22 +254,22 @@ class ProfileScreenState extends State<ProfileScreen>
                 height: 68,
                 decoration: const BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: kBackgroundPageColor, width: 4.0), 
+                    bottom: BorderSide(color: kBackgroundPageColor, width: 4.0),
                   ),
                 ),
                 child: TabBar(
                   controller: _tabController,
-                  tabs: const[
+                  tabs: const [
                     Tab(
                       child: Text(
                         'Meu perfil',
-                        style: TextStyle(fontSize: 18),  
+                        style: TextStyle(fontSize: 18),
                       ),
                     ),
                     Tab(
                       child: Text(
                         'IMC',
-                        style: TextStyle(fontSize: 18),  
+                        style: TextStyle(fontSize: 18),
                       ),
                     ),
                   ],
@@ -287,7 +317,9 @@ class ProfileScreenState extends State<ProfileScreen>
                                   ),
                                   child: CircleAvatar(
                                     radius: 80,
-                                    backgroundImage: _image != null ? FileImage(_image!) : const AssetImage('assets/images/gatinho.png'),
+                                    backgroundImage: _image != null
+                                        ? FileImage(_image!)
+                                        : NetworkImage(_imageUrl),
                                   ),
                                 )
                               ],
@@ -362,7 +394,7 @@ class ProfileScreenState extends State<ProfileScreen>
                             children: [
                               Container(
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10), 
+                                  borderRadius: BorderRadius.circular(10),
                                   color: kBackgroundCardColor,
                                 ),
                                 child: IgnorePointer(
@@ -380,14 +412,16 @@ class ProfileScreenState extends State<ProfileScreen>
                                           color: Color(0xFFFFFFA9),
                                           width: 2,
                                         ),
-                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(10)),
                                       ),
                                       focusedBorder: OutlineInputBorder(
                                         borderSide: BorderSide(
                                           color: kPrimaryColor,
                                           width: 2,
                                         ),
-                                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                                        borderRadius: BorderRadius.all(
+                                            Radius.circular(10)),
                                       ),
                                       contentPadding: EdgeInsets.all(10),
                                       labelText: 'E-mail',
@@ -452,23 +486,27 @@ class ProfileScreenState extends State<ProfileScreen>
                                 color: kBorderCardColor,
                                 width: 2,
                               ),
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(
                                 color: kPrimaryColor,
                                 width: 2,
                               ),
-                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
                             ),
-                            contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 15, horizontal: 10),
                             labelText: 'Sexo',
                             fillColor: Color(0XFFFFFFFF),
                             labelStyle: TextStyle(
                               color: kBorderCardColor,
                             ),
                           ),
-                          icon: const Icon(Icons.arrow_drop_down, color: kBorderCardColor),
+                          icon: const Icon(Icons.arrow_drop_down,
+                              color: kBorderCardColor),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -508,11 +546,15 @@ class ProfileScreenState extends State<ProfileScreen>
                               onPressed: () {
                                 saveUserData().then((_) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Dados salvos com sucesso!')),
+                                    const SnackBar(
+                                        content:
+                                            Text('Dados salvos com sucesso!')),
                                   );
                                 }).catchError((error) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Erro ao salvar dados: $error')),
+                                    SnackBar(
+                                        content: Text(
+                                            'Erro ao salvar dados: $error')),
                                   );
                                 });
                               },
@@ -537,10 +579,11 @@ class ProfileScreenState extends State<ProfileScreen>
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
-                                  side: const BorderSide(color: kBorderCardColor, width: 2),
+                                  side: const BorderSide(
+                                      color: kBorderCardColor, width: 2),
                                 ),
                               ),
-                               onPressed: () {
+                              onPressed: () {
                                 logout();
                               },
                               child: const Text('Deslogar'),
@@ -692,7 +735,7 @@ class ProfileScreenState extends State<ProfileScreen>
                           ),
                         ),
                         const SizedBox(height: 50),
-                        if (heightController.text.isNotEmpty && heightController.text != "0")
+                        if (imcRecords.isNotEmpty)
                         const Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
@@ -700,12 +743,12 @@ class ProfileScreenState extends State<ProfileScreen>
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white, 
+                              color: Colors.white,
                             ),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        if (heightController.text.isNotEmpty && heightController.text != "0")
+                        if (imcRecords.isNotEmpty)
                         Column(
                           children: imcRecords.map((record) {
                             Map<String, dynamic> imcDescriptionMap = IMCService.getIMCDescription(record['imc_value']);
@@ -868,8 +911,8 @@ class ProfileScreenState extends State<ProfileScreen>
   }
 
   logout() {
-     _authenticationService.signOut();
-     Navigator.pushReplacement(
+    _authenticationService.signOut();
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const LoginWidget()),
     );

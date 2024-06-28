@@ -7,6 +7,7 @@ class Person {
   User userUid;
   String? birthDate;
   String? sex;
+  String? imageUrl;
   List? imc;
 
   //IMAGEM
@@ -18,6 +19,7 @@ class Person {
     required this.userUid, 
     this.birthDate,
     this.sex,
+    this.imageUrl,
     this.imc,
   });
 
@@ -28,6 +30,7 @@ class Person {
         userUid = data['userUid'],
         birthDate = data['birthDate'],
         sex = data['sex'],
+        imageUrl = data['imageUrl'],
         imc = data['imc'];
 
   Map<String, dynamic> toFirestore() {
@@ -38,6 +41,7 @@ class Person {
       'userUid': userUid,
       'birthDate': birthDate,
       'sex': sex,
+      'imageUrl': imageUrl,
       'imc': imc,
     };
   }
